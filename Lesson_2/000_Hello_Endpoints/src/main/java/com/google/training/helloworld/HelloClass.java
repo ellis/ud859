@@ -10,6 +10,10 @@ public class HelloClass {
         this.message = "Hello " + name + "!";
     }
 
+    public HelloClass (String name, String period) {
+        this.message = "Good " + period + " " + name + "!";
+    }
+
     public String getMessage() {
         return message;
     }
