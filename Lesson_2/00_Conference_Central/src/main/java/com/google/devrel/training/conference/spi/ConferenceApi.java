@@ -48,30 +48,34 @@ public class ConferenceApi {
 
     // TODO 1 Pass the ProfileForm parameter
     // TODO 2 Pass the User parameter
-    public Profile saveProfile() throws UnauthorizedException {
-
-        String userId = null;
-        String mainEmail = null;
-        String displayName = "Your name will go here";
-        TeeShirtSize teeShirtSize = TeeShirtSize.NOT_SPECIFIED;
+    public Profile saveProfile(final User user, ProfileForm profileForm) throws UnauthorizedException {
 
         // TODO 2
         // If the user is not logged in, throw an UnauthorizedException
+        if (user == null) {
+        	throw new UnauthorizedException("Authorization required");
+        }
 
         // TODO 1
         // Set the teeShirtSize to the value sent by the ProfileForm, if sent
         // otherwise leave it as the default value
-
-        // TODO 1
-        // Set the displayName to the value sent by the ProfileForm, if sent
-        // otherwise set it to null
+        final TeeShirtSize teeShirtSize =
+       		(profileForm.getTeeShirtSize() != null)
+       			? profileForm.getTeeShirtSize()
+       			: TeeShirtSize.NOT_SPECIFIED;
 
         // TODO 2
         // Get the userId and mainEmail
+        final String userId = user.getUserId();
+        final String mainEmail = user.getEmail();
 
         // TODO 2
         // If the displayName is null, set it to default value based on the user's email
         // by calling extractDefaultDisplayNameFromEmail(...)
+        final String displayName =
+        	(profileForm.getDisplayName() != null)
+        		? profileForm.getDisplayName()
+        		: extractDefaultDisplayNameFromEmail(mainEmail);  
 
         // Create a new Profile entity from the
         // userId, displayName, mainEmail and teeShirtSize
@@ -79,6 +83,7 @@ public class ConferenceApi {
 
         // TODO 3 (In Lesson 3)
         // Save the Profile entity in the datastore
+        ofy().save().entity(profile).now();
 
         // Return the profile
         return profile;
@@ -102,9 +107,9 @@ public class ConferenceApi {
 
         // TODO
         // load the Profile Entity
-        String userId = ""; // TODO
-        Key key = null; // TODO
-        Profile profile = null; // TODO load the Profile entity
+        final String userId = user.getUserId();
+        final Key<Profile> key = Key.create(Profile.class, userId);
+        final Profile profile = ofy().load().key(key).now();
         return profile;
     }
 }
