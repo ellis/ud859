@@ -55,6 +55,11 @@ public class ConferenceApi {
         if (user == null) {
         	throw new UnauthorizedException("Authorization required");
         }
+        
+        // load the Profile Entity
+        final String userId = user.getUserId();
+        final Key<Profile> key = Key.create(Profile.class, userId);
+        final Profile old = ofy().load().key(key).now();
 
         // TODO 1
         // Set the teeShirtSize to the value sent by the ProfileForm, if sent
@@ -62,11 +67,12 @@ public class ConferenceApi {
         final TeeShirtSize teeShirtSize =
        		(profileForm.getTeeShirtSize() != null)
        			? profileForm.getTeeShirtSize()
-       			: TeeShirtSize.NOT_SPECIFIED;
+       			: (old != null)
+       			  ? old.getTeeShirtSize()
+       			  : TeeShirtSize.NOT_SPECIFIED;
 
         // TODO 2
         // Get the userId and mainEmail
-        final String userId = user.getUserId();
         final String mainEmail = user.getEmail();
 
         // TODO 2
@@ -75,7 +81,9 @@ public class ConferenceApi {
         final String displayName =
         	(profileForm.getDisplayName() != null)
         		? profileForm.getDisplayName()
-        		: extractDefaultDisplayNameFromEmail(mainEmail);  
+        		: (old != null)
+        		  ? old.getDisplayName()
+        		  : extractDefaultDisplayNameFromEmail(mainEmail);  
 
         // Create a new Profile entity from the
         // userId, displayName, mainEmail and teeShirtSize
