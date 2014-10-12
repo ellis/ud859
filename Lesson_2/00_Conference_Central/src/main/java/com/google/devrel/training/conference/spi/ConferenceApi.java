@@ -13,6 +13,7 @@ import com.google.devrel.training.conference.Constants;
 import com.google.devrel.training.conference.domain.Conference;
 import com.google.devrel.training.conference.domain.Profile;
 import com.google.devrel.training.conference.form.ConferenceForm;
+import com.google.devrel.training.conference.form.ConferenceQueryForm;
 import com.google.devrel.training.conference.form.ProfileForm;
 import com.google.devrel.training.conference.form.ProfileForm.TeeShirtSize;
 import com.googlecode.objectify.Key;
@@ -205,8 +206,29 @@ public class ConferenceApi {
 		path = "queryConferences",
 		httpMethod = HttpMethod.POST
 	)
-    public List<Conference> queryConferences() {
-    	final Query<Conference> query = ofy().load().type(Conference.class).order("name");
+    public List<Conference> queryConferences(final ConferenceQueryForm conferenceQueryForm) {
+    	return conferenceQueryForm.getQuery().list();
+    }
+
+    @ApiMethod(
+		name = "getConferencesCreated",
+		path = "getConferencesCreated",
+		httpMethod = HttpMethod.POST
+	)
+    public List<Conference> getConferencesCreated(final User user) {
+    	final Key<Profile> profileKey = Key.create(Profile.class, user.getUserId());
+    	final Query<Conference> query = ofy().load().type(Conference.class).ancestor(profileKey).order("name");
+    	return query.list();
+    }
+
+    public List<Conference> filterPlayground(final User user) {
+    	final Query<Conference> query = ofy().load().type(Conference.class)
+    			.filter("city =", "London")
+    			.filter("topics =", "Medical Innovations")
+    			.filter("month =", 6)
+    			.filter("maxAttendees >", 10)
+    			.order("maxAttendees")
+    			.order("name");
     	return query.list();
     }
 }
