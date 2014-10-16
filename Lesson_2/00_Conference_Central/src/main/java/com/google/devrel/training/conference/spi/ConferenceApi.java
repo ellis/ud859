@@ -2,6 +2,8 @@ package com.google.devrel.training.conference.spi;
 
 import static com.google.devrel.training.conference.service.OfyService.ofy;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import javax.inject.Named;
@@ -305,9 +307,6 @@ public class ConferenceApi {
             throw new UnauthorizedException("Authorization required");
         }
 
-        // Get the userId
-        final String userId = user.getUserId();
-
         // TODO
         // Start transaction
         WrappedBoolean result = ofy().transact(new Work<WrappedBoolean>() {
@@ -332,8 +331,7 @@ public class ConferenceApi {
 
                 // TODO
                 // Get the user's Profile entity
-                final Key<Profile> key = Key.create(Profile.class, userId);
-                final Profile profile = ofy().load().key(key).now();
+                final Profile profile = getProfile(user);
 
                 // Has the user already registered to attend this conference?
                 if (profile.getConferenceKeysToAttend().contains(
@@ -356,7 +354,7 @@ public class ConferenceApi {
  
                     // TODO
                     // Save the Conference and Profile entities
-                    CONTINUE HERE
+                    ofy().save().entities(profile, conference);
                     
                     // We are booked!
                     return new WrappedBoolean(true, "Registration successful");
@@ -384,6 +382,48 @@ public class ConferenceApi {
             }
         }
         return result;
+    }
+    
+    /**
+     * Returns a collection of Conference Object that the user is going to attend.
+     *
+     * @param user An user who invokes this method, null when the user is not signed in.
+     * @return a Collection of Conferences that the user is going to attend.
+     * @throws UnauthorizedException when the User object is null.
+     */
+    @ApiMethod(
+    		name = "getConferencesToAttend",
+    		path = "getConferencesToAttend",
+    		httpMethod = HttpMethod.GET
+    		)
+    public Collection<Conference> getConferencesToAttend(final User user)
+    		throws UnauthorizedException, NotFoundException {
+    	// If not signed in, throw a 401 error.
+    	if (user == null) {
+    		throw new UnauthorizedException("Authorization required");
+    	}
+    	// TODO
+    	// Get the Profile entity for the user
+    	Profile profile = getProfile(user); // Change this;
+    	if (profile == null) {
+    		throw new NotFoundException("Profile doesn't exist.");
+    	}
+
+    	// TODO
+    	// Get the value of the profile's conferenceKeysToAttend property
+    	final List<String> keyStringsToAttend = profile.getConferenceKeysToAttend();
+
+    	// TODO
+    	// Iterate over keyStringsToAttend,
+    	// and return a Collection of the
+    	// Conference entities that the user has registered to atend
+    	final List<Key<Conference>> conferenceKey_l = new ArrayList<Key<Conference>>(0);
+    	for (final String keyString : keyStringsToAttend) {
+    		final Key<Conference> key = Key.create(keyString);
+    		conferenceKey_l.add(key);
+    	}
+
+		return ofy().load().keys(conferenceKey_l).values();
     }
 
     public List<Conference> filterPlayground(final User user) {
